@@ -1,3 +1,5 @@
+import random
+
 def create_dictionary_of_keys():
     max_number = random.randint(150, 300)
     prime_numbers = []
