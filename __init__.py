@@ -6,6 +6,9 @@ def create_dictionary_of_keys():
     symbols = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm']
 
     for i in range(2, max_number):
+        if i == 5:
+            continue
+        
         z = 0
             
         for j in range(2, i):
@@ -61,14 +64,12 @@ def encode(text: list[str], dictionary_of_keys):
         for i in range(len(dictionary_of_keys)):
             layer = dictionary_of_keys[f"layer {i}"]
                 
-            for key, value in layer.items():
-                line = line.replace(key, str(value))
-
-        encode_text.append(line)
-
-    return encode_text
+            for j in range(len(layer)):
+                line = line.replace(layer.keys(), layer.values() * 10)
 
 def decode(text: list[str], dictionary_of_keys):
+    #TODO hacer que este programa detecte los ceros y sepa que los ceros significa que la letra que estaba leyendo se hacabo y empieza una nueva
+    
     decode_text = []
     
     for line in text:
