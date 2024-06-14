@@ -6,9 +6,6 @@ def create_dictionary_of_keys():
     symbols = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm']
 
     for i in range(2, max_number):
-        if i == 5:
-            continue
-        
         z = 0
             
         for j in range(2, i):
@@ -65,10 +62,17 @@ def encode(text: list[str], dictionary_of_keys):
             layer = dictionary_of_keys[f"layer {i}"]
                 
             for j in range(len(layer)):
-                line = line.replace(layer.keys(), layer.values() * 10)
+                symbol = list(layer.keys())[j]
+                encode_symbol = str(list(layer.values())[j]) + ','
+
+                line = line.replace(symbol, encode_symbol)
+
+        encode_text.append(line)
+
+    return encode_text
 
 def decode(text: list[str], dictionary_of_keys):
-    #TODO hacer que este programa detecte los ceros y sepa que los ceros significa que la letra que estaba leyendo se hacabo y empieza una nueva
+    #TODO hacer que este programa detecte las comas y sepa que los ceros significa que la letra que estaba leyendo se hacabo y empieza una nueva
     
     decode_text = []
     
@@ -85,3 +89,35 @@ def decode(text: list[str], dictionary_of_keys):
         decode_text.append(line)
 
     return decode_text
+
+def test():
+    text = ['hello my name is kopo', 'hello kopo', 'can you give a onion kopo', 'of course I will do that']
+
+    dictionary_of_keys = create_dictionary_of_keys()
+
+    encode_text = encode(
+        text=text,
+        dictionary_of_keys=dictionary_of_keys
+    )
+
+    decode_text = decode(
+        text=encode_text,
+        dictionary_of_keys=dictionary_of_keys
+    )
+
+    if text == decode_text:
+        return True
+    else:
+        return False
+
+if __name__ == '__main__':
+    #test()
+
+    dictionary_of_keys = create_dictionary_of_keys()
+
+    enocde_text = encode(
+        text=['hello my name is kopo', 'hello kopo', 'can you give a onion kopo', 'of course I will do that'],
+        dictionary_of_keys=dictionary_of_keys
+    )
+
+    print(enocde_text)
