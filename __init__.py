@@ -1,9 +1,13 @@
 import random
 
-def create_dictionary_of_keys():
+def create_dictionary_of_keys(symbols=None):
+    """ unsupported numbers """
+
     max_number = random.randint(150, 300)
     prime_numbers = []
-    symbols = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm']
+
+    if not symbols:
+        symbols = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm']
 
     for i in range(2, max_number):
         z = 0
@@ -74,8 +78,6 @@ def encode(text: list[str], dictionary_of_keys):
     return encode_text
 
 def decode(text: list[str], dictionary_of_keys):
-    #TODO hacer que este programa detecte las comas y sepa que los ceros significa que la letra que estaba leyendo se hacabo y empieza una nueva
-
     # reverse the dictionary
     inverted_dict = {}
     for layer, chars in dictionary_of_keys.items():
