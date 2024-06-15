@@ -51,7 +51,9 @@ def create_dictionary_of_keys():
                 counter += 1
 
         i += 1
-        
+    
+    #BUG Two letters can have the same value, which means that when one is deciphered, it appears as many times as the other should appear.
+
     return dictionary_of_keys
 
 def encode(text: list[str], dictionary_of_keys):
@@ -73,20 +75,30 @@ def encode(text: list[str], dictionary_of_keys):
 
 def decode(text: list[str], dictionary_of_keys):
     #TODO hacer que este programa detecte las comas y sepa que los ceros significa que la letra que estaba leyendo se hacabo y empieza una nueva
-    
-    decode_text = []
-    
-    for line in text:
-        for i in range(len(dictionary_of_keys)):
-            layer = dictionary_of_keys[f"layer {i}"]
-            # Ordenamos las claves del diccionario por la longitud de sus valores en orden descendente
-            sorted_keys = sorted(layer.keys(), key=lambda k: len(str(layer[k])), reverse=True)
-                
-            for key in sorted_keys:
-                value = str(layer[key])
-                line = line.replace(value, key)
 
-        decode_text.append(line)
+    # reverse the dictionary
+    inverted_dict = {}
+    for layer, chars in dictionary_of_keys.items():
+        for char, num in chars.items():
+            inverted_dict[str(num)] = char
+
+    decode_text = []
+
+    for line in text:
+        decode_line = []
+
+        for word in line.split(', '):
+            decode_word = []
+
+            for number in word.split(','):
+                decode_letter = inverted_dict.get(str(number.strip()), '')
+                decode_word.append(decode_letter)
+            
+            decode_word_join = ''.join(decode_word)
+            decode_line.append(decode_word_join)
+
+        decode_line_join = ' '.join(decode_line)
+        decode_text.append(decode_line_join)
 
     return decode_text
 
@@ -111,13 +123,21 @@ def test():
         return False
 
 if __name__ == '__main__':
-    #test()
+    #print(test())
 
     dictionary_of_keys = create_dictionary_of_keys()
 
-    enocde_text = encode(
+    encode_text = encode(
         text=['hello my name is kopo', 'hello kopo', 'can you give a onion kopo', 'of course I will do that'],
         dictionary_of_keys=dictionary_of_keys
     )
 
-    print(enocde_text)
+    print(encode_text)
+
+    decode_text = decode(
+        text=encode_text,
+        dictionary_of_keys=dictionary_of_keys
+    )
+
+    print(dictionary_of_keys)
+    print(decode_text)
