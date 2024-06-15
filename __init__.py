@@ -1,9 +1,11 @@
 import random
 
-def create_dictionary_of_keys():
+def create_dictionary_of_keys(symbols=None):
     max_number = random.randint(150, 300)
     prime_numbers = []
-    symbols = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm']
+    
+    if not symbols:
+        symbols = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm']
 
     for i in range(2, max_number):
         z = 0
