@@ -110,24 +110,42 @@ def decode(text: list[str], dictionary_of_keys):
     return decode_text
 
 def test():
-    text = ['hello my name is kopo', 'hello kopo', 'can you give a onion kopo', 'of course i will do that']
+    cases = [
+        {'text' : ['hello my name is kopo', 'hello kopo', 'can you give a onion kopo', 'of course i will do that'], 'symbols' : None}, # test if the program can work with lowercase letters
+        {'text' : ['IOPOI PODI', 'DI'], 'symbols' : ['I', 'O', 'P', 'I', 'D', 'I']}, # test if the program can work with capital letters
+        {'text' : ['12 34 19', '98 09 12 13'], 'symbols' : ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']}, # test if the program can work with numbers
+        {'text' : ['////?????? ####,,,,....======'], 'symbols' : ['/', '?', '#', ',', '.', '=']}, # test if the program can work with symbols
+        {'text' : ['Ho mo lo 123-123-234-55', 'Po om pol #pom', '1 + 2 = 3'], 'symbols' : ['H', 'o', 'm', 'l', '1', '2', '3', '4', '5', 'P', '#', '+', '=']} # test if the program can work with all mix
+    ]
+    result = []
 
-    dictionary_of_keys = create_dictionary_of_keys()
+    for text in cases:
+        dictionary_of_keys = create_dictionary_of_keys(text['symbols'])
 
-    encode_text = encode(
-        text=text,
-        dictionary_of_keys=dictionary_of_keys
-    )
+        encode_text = encode(
+            text=text['text'],
+            dictionary_of_keys=dictionary_of_keys
+        )
 
-    decode_text = decode(
-        text=encode_text,
-        dictionary_of_keys=dictionary_of_keys
-    )
+        decode_text = decode(
+            text=encode_text,
+            dictionary_of_keys=dictionary_of_keys
+        )
 
-    if text == decode_text:
-        return True
-    else:
-        return False
+        if text['text'] == decode_text:
+            result.append(True)
+        else:
+            a = text['text']
+
+            print(f'''
+Expected text: {a}
+
+Text received: {decode_text}
+            ''')
+
+            result.append(False)
+
+    return result
 
 if __name__ == '__main__':
     print(test())
