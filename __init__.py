@@ -1,6 +1,13 @@
 import random
 
-def create_dictionary_of_keys(symbols=None):
+def create_symbols(text: list[str]):
+    united_phrases = ' '.join(text)
+    letter_set = set(united_phrases)
+    list_of_letters = list(letter_set)
+
+    return list_of_letters
+
+def create_dictionary_of_keys(symbols):
     max_number = random.randint(150, 300)
     prime_numbers = []
     
@@ -112,14 +119,16 @@ def decode(text: list[str], dictionary_of_keys):
 def test():
     cases = [
         {'text' : ['hello my name is kopo', 'hello kopo', 'can you give a onion kopo', 'of course i will do that'], 'symbols' : None}, # test if the program can work with lowercase letters
-        {'text' : ['IOPOI PODI', 'DI'], 'symbols' : ['I', 'O', 'P', 'I', 'D', 'I']}, # test if the program can work with capital letters
-        {'text' : ['12 34 19', '98 09 12 13'], 'symbols' : ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']}, # test if the program can work with numbers
-        {'text' : ['////?????? ####,,,,....======'], 'symbols' : ['/', '?', '#', ',', '.', '=']}, # test if the program can work with symbols
-        {'text' : ['Ho mo lo 123-123-234-55', 'Po om pol #pom', '1 + 2 = 3'], 'symbols' : ['H', 'o', 'm', 'l', '1', '2', '3', '4', '5', 'P', '#', '+', '=']} # test if the program can work with all mix
+        {'text' : ['IOPOI PODI', 'DI'], 'symbols' : None}, # test if the program can work with capital letters
+        {'text' : ['12 34 19', '98 09 12 13'], 'symbols' : None}, # test if the program can work with numbers
+        {'text' : ['////?????? ####,,,,....======'], 'symbols' : None}, # test if the program can work with symbols
+        {'text' : ['Ho mo lo 123-123-234-55', 'Po om pol #pom', '1 + 2 = 3'], 'symbols' : None} # test if the program can work with all mix
     ]
     result = []
 
     for text in cases:
+        text['symbols'] = create_symbols(text=text['text'])
+
         dictionary_of_keys = create_dictionary_of_keys(text['symbols'])
 
         encode_text = encode(
