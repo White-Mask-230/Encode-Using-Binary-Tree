@@ -23,9 +23,6 @@ cd Encode-Using-Binary-Tree
 Note: It haven' t use external librarys so that's all.
 
 # Simple example of use
-## Function
-Encode text with a very strong encode
-
 ## Content
 (All functions)
 * **create_dictionary_of_keys**: no arguments
