@@ -6,19 +6,14 @@ __author__ = 'White Mask 230 (Lucas Varela Correa)'
 #TODO create technical documentation
 #TODO add type hints to the functions
 
-def create_symbols(text: list[str]):
+
+def create_dictionary_of_keys(text: list[str]):
     united_phrases = ' '.join(text)
     letter_set = set(united_phrases)
-    list_of_letters = list(letter_set)
+    symbols = list(letter_set)
 
-    return list_of_letters
-
-def create_dictionary_of_keys(symbols):
     max_number = random.randint(150, 300)
     prime_numbers = []
-
-    if not symbols:
-        symbols = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm']
 
     for i in range(2, max_number):
         z = 0
@@ -87,6 +82,7 @@ def create_dictionary_of_keys(symbols):
 
 def encode(text: list[str], dictionary_of_keys):
     encode_text = []
+    letters = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm']
 
     for line in text:
         for i in range(len(dictionary_of_keys)):
@@ -126,21 +122,19 @@ def decode(text: list[str], invert_dictionary_of_keys):
 
 def test():
     cases = [
-        {'text' : ['hello my name is kopo', 'hello kopo', 'can you give a onion kopo', 'of course i will do that'], 'symbols' : None}, # test if the program can work with lowercase letters
-        {'text' : ['IOPOI PODI', 'DI'], 'symbols' : None}, # test if the program can work with capital letters
-        {'text' : ['12 34 19', '98 09 12 13'], 'symbols' : None}, # test if the program can work with numbers
-        {'text' : ['////?????? ####,,,,....======'], 'symbols' : None}, # test if the program can work with symbols
-        {'text' : ['Ho mo lo 123-123-234-55', 'Po om pol #pom', '1 + 2 = 3'], 'symbols' : None} # test if the program can work with all mix
+        ['hello my name is kopo', 'hello kopo', 'can you give a onion kopo', 'of course i will do that'], # test if the program can work with lowercase letters
+        ['IOPOI PODI', 'DI'], # test if the program can work with capital letters
+        ['12 34 19', '98 09 12 13'], # test if the program can work with numbers
+        ['////?????? ####,,,,....======'], # test if the program can work with symbols
+        ['Ho mo lo 123-123-234-55', 'Po om pol #pom', '1 + 2 = 3']# test if the program can work with all mix
     ]
     result = []
 
     for text in cases:
-        text['symbols'] = create_symbols(text=text['text'])
-
-        dictionary_of_keys, invert_dictionary_of_keys = create_dictionary_of_keys(text['symbols'])
+        dictionary_of_keys, invert_dictionary_of_keys = create_dictionary_of_keys(text)
 
         encode_text = encode(
-            text=text['text'],
+            text=text,
             dictionary_of_keys=dictionary_of_keys
         )
 
@@ -149,13 +143,11 @@ def test():
             invert_dictionary_of_keys=invert_dictionary_of_keys
         )
 
-        if text['text'] == decode_text:
+        if text == decode_text:
             result.append(True)
         else:
-            a = text['text']
-
             print(f'''
-Expected text: {a}
+Expected text: {text}
 
 Text received: {decode_text}
             ''')
