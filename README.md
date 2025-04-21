@@ -25,9 +25,9 @@ Note: It haven' t use external librarys so that's all.
 # Simple example of use
 ## Content
 (All functions)
-* **create_dictionary_of_keys** Arguments: _text
+* **create_dictionary_of_keys** Arguments: _text_ -> `list[str]`
 * **encode** Arguments: _text_ -> `list[str]`; _dictionary_of_keys_ -> `dict[str][int]`
-* **decode** Arguments: _text_ -> `list[str]`; _dictionary_of_keys_ -> `dict[str][int]`
+* **decode** Arguments: _text_ -> `list[str]`; _invert_dictionary_of_keys_ -> `dict[str][int]`
 
 ## Example of use
 ``` python
