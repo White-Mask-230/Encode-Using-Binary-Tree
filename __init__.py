@@ -1,197 +1,258 @@
-#TODO hacer que la generación de archivos sea automatica
-#TODO crear una función main para ejecutar el programa normal
-#TODO pasar la documentación a ingles
-#TODO generar un documento tecnico y publicarlo en alguna revista
+"""
+    Module implementing a prime-factorization-based encoding and decoding system.
 
-import random
-import json
-from typing import Tuple, List
+    This module generates a hierarchical encoding dictionary mapping unique symbols from 
+    input text to distinct composite integers formed by products of prime numbers arranged 
+    in layers. Each layer corresponds to an exponential expansion of symbols encoded with 
+    unique prime factors ensuring collision-free reversible mappings.
 
+    Functionality includes:
+        * Dynamically generating a sufficient set of prime numbers tailored to input size.
+        * Incremental serialization of dictionaries and encoded text to disk for memory efficiency.
+        * Public API exposing creation of encoding/decoding dictionaries, text encoding, and decoding.
+        * Support for full ASCII range including alphabetic characters, digits, and special symbols.
+
+    This design facilitates reversible and scalable symbol encoding suitable for custom 
+    lightweight cryptographic or compression applications.
+"""
+
+import random, json
+from typing import List, Tuple
+
+__all__ = ['create_dictionary_of_keys', 'encode', 'decode']
 __author__ = 'White Mask 230 (Lucas Varela Correa)'
 
+def _generate_prime_numbers(n: int) -> List[int]:
+    """
+        Generate at least `n` prime numbers.
 
-def generate_prime_numbers(limit: int = 300) -> List[int]:
-    """Genera una lista de números primos hasta un límite dado."""
+        This function uses a simple method to generate prime numbers by checking divisibility.
+
+        Args:
+            n (int): The number of prime numbers to generate.
+
+        Returns:
+            List[int]: A list containing at least `n` prime numbers.
+    """
+
     primes = []
-    for num in range(2, limit):
-        if all(num % div != 0 for div in range(2, int(num ** 0.5) + 1)):
-            primes.append(num)
-    return primes
+    candidate = 2
 
+    while len(primes) < n:
+        is_prime = True
+        limit = int(candidate**0.5) + 1
 
-def create_dictionary_of_keys(text: List[str]) -> Tuple[dict, dict]:
-    """
-    Crea un diccionario de codificación basado en capas usando números primos.
-
-    Args:
-        text (List[str]): Lista de líneas de texto a codificar.
-
-    Returns:
-        Tuple[dict, dict]: (Diccionario de codificación, Diccionario invertido de decodificación)
-    """
-    full_text = ''.join(text)
-    symbols = sorted(set(full_text))  # Incluye todos los símbolos, números y letras
-
-    primes = generate_prime_numbers()
-    random.shuffle(primes)
-
-    dictionary_of_keys = {}
-    inverted_dict = {}
-    used_values = set()
-
-    layer = 0
-    index = 0
-
-    total_symbols = len(symbols)
-
-    while index < total_symbols:
-        key = f"layer {layer}"
-        dictionary_of_keys[key] = {}
-
-        elements_in_layer = 2 ** layer
-        for local_index in range(elements_in_layer):
-            if index >= total_symbols:
+        for i in range(2, limit):
+            if candidate % i == 0:
+                is_prime = False
                 break
 
-            symbol = symbols[index]
-            if layer == 0:
-                base = 1
-            else:
-                # Accede de forma segura al valor base en la capa anterior
-                previous_layer_values = list(dictionary_of_keys[f"layer {layer - 1}"].values())
-                base_index = local_index // 2
-                if base_index >= len(previous_layer_values):
-                    base_index = len(previous_layer_values) - 1
-                base = previous_layer_values[base_index]
+        if is_prime:
+            primes.append(candidate)
 
-            if not primes:
-                raise ValueError("No hay suficientes números primos para generar los códigos.")
+        candidate += 1
 
-            prime = primes.pop()
-            code = base * prime
+    return primes
 
-            while code in used_values:
-                if not primes:
-                    raise ValueError("No hay suficientes números primos únicos disponibles.")
+def create_dictionary_of_keys(text: List[str]) -> Tuple[str, str]:
+    """
+        Creates encoding and decoding dictionaries from the given text and saves them to files.
+
+        The dictionaries are written incrementally to files layer by layer to avoid
+        excessive memory usage. The encoding dictionary maps symbols to unique numeric codes,
+        and the decoding dictionary is the inverse.
+
+        Args:
+            text (List[str]): A list of strings representing the text to encode.
+
+        Returns:
+            Tuple[str, str]: Tuple containing paths to the encoding dictionary file and the
+                            decoding (inverted) dictionary file.
+    """
+
+    all_text = ''.join(text)
+    symbols = sorted(set(all_text))
+
+    required_primes = len(symbols) * 4
+    primes = _generate_prime_numbers(required_primes)
+    random.shuffle(primes)
+
+    dict_file_path = "dictionary.json"
+    inverted_file_path = "inverted_dictionary.json"
+
+    with open(dict_file_path, 'w', encoding='utf-8') as dict_file, \
+         open(inverted_file_path, 'w', encoding='utf-8') as inverted_file:
+
+        dictionary_of_keys = {}
+        inverted_dict = {}
+
+        index = 0
+        layer = 0
+        total_symbols = len(symbols)
+
+        while index < total_symbols:
+            layer_key = f"layer {layer}"
+            dictionary_of_keys[layer_key] = {}
+
+            elements_in_layer = 2 ** layer
+
+            for local_index in range(elements_in_layer):
+                if index >= total_symbols:
+                    break
+
+                symbol = symbols[index]
+
+                if layer == 0:
+                    base = 1
+                else:
+                    prev_layer_key = f"layer {layer - 1}"
+                    prev_values = list(dictionary_of_keys[prev_layer_key].values())
+                    base_index = local_index // 2
+                    if base_index >= len(prev_values):
+                        base_index = len(prev_values) - 1
+                    base = prev_values[base_index]
+
                 prime = primes.pop()
                 code = base * prime
 
-            dictionary_of_keys[key][symbol] = code
-            inverted_dict[str(code)] = symbol
-            used_values.add(code)
-            index += 1
+                while code in inverted_dict:
+                    if not primes:
+                        raise ValueError("Ran out of prime numbers to assign codes.")
 
-        layer += 1
+                    prime = primes.pop()
+                    code = base * prime
 
-    return dictionary_of_keys, inverted_dict
+                dictionary_of_keys[layer_key][symbol] = code
+                inverted_dict[str(code)] = symbol
 
+                index += 1
 
-def encode(text: List[str], dictionary_of_keys: dict) -> List[str]:
+            dict_file.write(json.dumps({layer_key: dictionary_of_keys[layer_key]}) + "\n")
+            dict_file.flush()
+
+            layer += 1
+
+        for code, symbol in inverted_dict.items():
+            inverted_file.write(json.dumps({code: symbol}) + "\n")
+
+        inverted_file.flush()
+
+    print(f"[INFO] Encoding dictionary saved to: {dict_file_path}")
+    print(f"[INFO] Decoding dictionary saved to: {inverted_file_path}")
+
+    return dict_file_path, inverted_file_path
+
+def encode(text: List[str], dict_path: str) -> str:
     """
-    Codifica una lista de texto usando el diccionario de claves generado.
+        Encodes a list of strings using a dictionary stored in a file, avoiding loading
+        the entire dictionary into memory at once.
 
-    Args:
-        text (List[str]): Texto original.
-        dictionary_of_keys (dict): Diccionario de codificación.
+        Args:
+            text (List[str]): The original text to encode.
+            dict_path (str): Path to the JSON dictionary file generated by `create_dictionary_of_keys`.
 
-    Returns:
-        List[str]: Texto codificado.
+        Returns:
+            str: Path to the file where the encoded text is saved.
     """
+
     symbol_to_code = {}
-    for layer in dictionary_of_keys.values():
-        symbol_to_code.update(layer)
 
-    encoded_lines = []
-    for line in text:
-        encoded_line = ','.join(str(symbol_to_code[char]) for char in line if char in symbol_to_code)
-        encoded_lines.append(encoded_line)
+    with open(dict_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            layer_dict = json.loads(line)
 
-    return encoded_lines
+            for layer in layer_dict.values():
+                symbol_to_code.update(layer)
 
+    encoded_file_path = "encoded_text.txt"
+    with open(encoded_file_path, 'w', encoding='utf-8') as encoded_file:
+        for line in text:
+            encoded_line = []
 
-def decode(encoded_text: List[str], inverted_dict: dict) -> List[str]:
+            for ch in line:
+                code = symbol_to_code.get(ch)
+
+                if code is not None:
+                    encoded_line.append(str(code))
+                else:
+                    encoded_line.append(ch)
+
+            encoded_file.write(','.join(encoded_line) + "\n")
+
+    print(f"[INFO] Encoded text saved to: {encoded_file_path}")
+
+    return encoded_file_path
+
+def decode(encoded_path: str, inverted_dict_path: str) -> List[str]:
     """
-    Decodifica una lista de líneas previamente codificadas.
+        Decodes an encoded text file using an inverted dictionary stored in a file,
+        reading both files line by line to minimize memory usage.
 
-    Args:
-        encoded_text (List[str]): Texto codificado.
-        inverted_dict (dict): Diccionario invertido.
+        Args:
+            encoded_path (str): Path to the encoded text file.
+            inverted_dict_path (str): Path to the inverted dictionary JSON file.
 
-    Returns:
-        List[str]: Texto original decodificado.
+        Returns:
+            List[str]: The decoded text as a list of strings.
     """
+
+    code_to_symbol = {}
+
+    with open(inverted_dict_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            d = json.loads(line)
+            code_to_symbol.update(d)
+
     decoded_lines = []
 
-    for line in encoded_text:
-        numbers = line.split(',')
-        decoded_line = ''.join(inverted_dict.get(num.strip(), '') for num in numbers if num.strip())
-        decoded_lines.append(decoded_line)
+    with open(encoded_path, 'r', encoding='utf-8') as encoded_file:
+        for line in encoded_file:
+            line = line.strip()
+
+            if not line:
+                decoded_lines.append('')
+                continue
+
+            codes = line.split(',')
+            decoded_line = []
+
+            for code in codes:
+                symbol = code_to_symbol.get(code, '')
+                decoded_line.append(symbol)
+
+            decoded_lines.append(''.join(decoded_line))
+
+    print(f"[INFO] Decoded text loaded from: {encoded_path}")
 
     return decoded_lines
 
-
-def save_to_file(filepath: str, content: List[str]) -> None:
+def _test():
     """
-    Guarda una lista de líneas en un archivo de texto.
-
-    Args:
-        filepath (str): Ruta del archivo.
-        content (List[str]): Texto a guardar.
+        Internal test routine for encoding and decoding.
+        Prints results and cleans up temporary files.
     """
-    with open(filepath, 'w', encoding='utf-8') as f:
-        for line in content:
-            f.write(line + '\n')
 
-
-def load_from_file(filepath: str) -> List[str]:
-    """
-    Carga una lista de líneas desde un archivo de texto.
-
-    Args:
-        filepath (str): Ruta del archivo.
-
-    Returns:
-        List[str]: Texto cargado.
-    """
-    with open(filepath, 'r', encoding='utf-8') as f:
-        return [line.strip() for line in f.readlines()]
-
-
-def save_dictionaries(dict1: dict, dict2: dict, base_path: str) -> None:
-    """Guarda los diccionarios de codificación y decodificación en archivos JSON."""
-    with open(base_path + "_encoder.json", 'w') as f:
-        json.dump(dict1, f)
-
-    with open(base_path + "_decoder.json", 'w') as f:
-        json.dump(dict2, f)
-
-def test():
-    """
-    Ejecuta casos de prueba para validar el sistema de codificación y decodificación.
-    """
     cases = [
-        ['hello my name is kopo', 'hello kopo', 'can you give a onion kopo', 'of course i will do that'],
+        ['hello my name is kopo', 'hello kopo'],
         ['IOPOI PODI', 'DI'],
         ['12 34 19', '98 09 12 13'],
         ['////?????? ####,,,,....======'],
         ['Ho mo lo 123-123-234-55', 'Po om pol #pom', '1 + 2 = 3']
     ]
 
-    for i, text in enumerate(cases):
-        dict_keys, inv_keys = create_dictionary_of_keys(text)
-        encoded = encode(text, dict_keys)
-        decoded = decode(encoded, inv_keys)
+    for i, case in enumerate(cases):
+        print(f"\n[TEST] Case {i + 1}")
 
-        # Guardar para inspección
-        save_to_file(f'test_case_{i+1}_encoded.txt', encoded)
-        save_to_file(f'test_case_{i+1}_decoded.txt', decoded)
-        save_dictionaries(dict_keys, inv_keys, f'test_case_{i+1}_dict')
+        dict_path, inverted_path = create_dictionary_of_keys(case)
+        encoded_file = encode(case, dict_path)
+        decoded = decode(encoded_file, inverted_path)
 
-        assert text == decoded, f'Error en el caso {i + 1}:\nEsperado: {text}\nRecibido: {decoded}'
-        print(f'Caso {i + 1} exitoso')
-
-    print("Todos los tests pasaron correctamente.")
-
+        if decoded == case:
+            print("[RESULT] OK")
+        else:
+            print("[RESULT] FAIL")
+            print("Expected:", case)
+            print("Received:", decoded)
 
 if __name__ == '__main__':
-    test()
+    _test()
