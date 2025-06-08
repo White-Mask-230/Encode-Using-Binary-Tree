@@ -2,7 +2,7 @@
 This program is a encode system that use the structure of a Binary Tree
 
 # Status of the Project
-Beta 5.0
+Version 1.0
 
 # Oficial repository
 You can find this program also in:
@@ -24,29 +24,31 @@ Note: It haven' t use external librarys so that's all.
 
 # Content
 (All functions)
-* **create_dictionary_of_keys** Arguments: _text_ -> `list[str]`
-* **encode** Arguments: _text_ -> `list[str]`; _dictionary_of_keys_ -> `dict[str][int]`
-* **decode** Arguments: _text_ -> `list[str]`; _invert_dictionary_of_keys_ -> `dict[str][int]`
+* **create_dictionary_of_keys** Arguments: _text_ -> `Tuple[str, str]`
+* **encode** Arguments: _text_ -> `list[str]`; _dictionary_of_keys_ -> `str`
+* **decode** Arguments: _text_ -> `list[str]`; _invert_dictionary_of_keys_ -> `List[str]`
 
 # Example of use
 ``` python
 import EUBTA
 
-text = ['hi all', 'no hi all', 'lion in a dragon', 'every one dancing right now']
+cases = [
+    ['hello my name is kopo', 'hello kopo'],
+    ['IOPOI PODI', 'DI'],
+    ['12 34 19', '98 09 12 13'],
+    ['////?????? ####,,,,....======'],
+    ['Ho mo lo 123-123-234-55', 'Po om pol #pom', '1 + 2 = 3']
+]
 
-dictionary_of_keys, invert_dictionary_of_keys = create_dictionary_of_keys(text)
-encode_text = encode(
-    text=text,
-    dictionary_of_keys=dictionary_of_keys
-)
-decode_text = decode(
-    text=encode_text,
-    invert_dictionary_of_keys=invert_dictionary_of_keys
-)
+for i, case in enumerate(cases):
+    dict_path, inverted_path = create_dictionary_of_keys(case)
+    encoded_file = encode(case, dict_path)
+    decoded_file = decode(encoded_file, inverted_path)
 
-print(f'Dictionary of keys: {dictionary_of_keys}')
-print(f'Encode text: {encode_text}')
-print(f'Decode text: {decode_text}')
+    print(f'Your dict path: {dict_path}')
+    print(f'Your inverted path: {inverted_path}')
+    print(f'Your encoded file path: {encoded_file}')
+    print(f'Your decoded file path: {decoded_file}')
 ```
 
 # Contact
