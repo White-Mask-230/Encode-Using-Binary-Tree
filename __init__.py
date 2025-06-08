@@ -1,160 +1,197 @@
+#TODO hacer que la generación de archivos sea automatica
+#TODO crear una función main para ejecutar el programa normal
+#TODO pasar la documentación a ingles
+#TODO generar un documento tecnico y publicarlo en alguna revista
+
 import random
+import json
+from typing import Tuple, List
 
-def create_symbols(text: list[str]):
-    united_phrases = ' '.join(text)
-    letter_set = set(united_phrases)
-    list_of_letters = list(letter_set)
+__author__ = 'White Mask 230 (Lucas Varela Correa)'
 
-    return list_of_letters
 
-def create_dictionary_of_keys(symbols):
-    max_number = random.randint(150, 300)
-    prime_numbers = []
-    
-    if not symbols:
-        symbols = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm']
+def generate_prime_numbers(limit: int = 300) -> List[int]:
+    """Genera una lista de números primos hasta un límite dado."""
+    primes = []
+    for num in range(2, limit):
+        if all(num % div != 0 for div in range(2, int(num ** 0.5) + 1)):
+            primes.append(num)
+    return primes
 
-    for i in range(2, max_number):
-        z = 0
-            
-        for j in range(2, i):
-            if i % j == 0:
-                z = 1
-                break
 
-        if z == 0:
-            prime_numbers.append(i)
-        
-    dictionary_of_keys = {"layer 0": {symbols[0]: random.choice(prime_numbers)}, "layer 1": {}}
-    used_values = {list(dictionary_of_keys["layer 0"].values())[0]}  # Set to keep track of used values
+def create_dictionary_of_keys(text: List[str]) -> Tuple[dict, dict]:
+    """
+    Crea un diccionario de codificación basado en capas usando números primos.
 
-    del symbols[0]
-    
-    layer = 1
-    id_previous_layer = 0  # Its function is to select the upstream element that must be added two other elements
-    counter = 0  # Its function is to ensure that only two elements are assigned to the upstream element.
-    i = 1  # Its function is to ensure that an empty layer is not created
+    Args:
+        text (List[str]): Lista de líneas de texto a codificar.
 
-    for symbol in symbols:        
-        random_number = random.choice(prime_numbers)
-        value_1_upstream = list(dictionary_of_keys[f'layer {id_previous_layer}'].values())[id_previous_layer]
+    Returns:
+        Tuple[dict, dict]: (Diccionario de codificación, Diccionario invertido de decodificación)
+    """
+    full_text = ''.join(text)
+    symbols = sorted(set(full_text))  # Incluye todos los símbolos, números y letras
 
-        new_value = value_1_upstream * random_number
-        
-        # Ensure new_value is unique
-        while new_value in used_values:
-            random_number = random.choice(prime_numbers)
-            new_value = value_1_upstream * random_number
+    primes = generate_prime_numbers()
+    random.shuffle(primes)
 
-        dictionary_of_keys[f'layer {layer}'][symbol] = new_value
-        used_values.add(new_value)
-
-        if len(list(dictionary_of_keys[f'layer {layer}'].values())) == 2 ** layer:
-            # A new layer is created
-            
-            if len(symbols) == i:  # Prevents an empty layer from being created
-                break
-
-            layer += 1
-            id_previous_layer = 0
-            dictionary_of_keys[f'layer {layer}'] = {}
-        else: 
-            # Checks if the upstream element needs to be changed
-            
-            if counter == 2:
-                id_previous_layer += 1
-                counter = 0
-
-            else:
-                counter += 1
-
-        i += 1
-
-    return dictionary_of_keys
-
-def encode(text: list[str], dictionary_of_keys):
-    encode_text = []
-    
-    for line in text:
-        for i in range(len(dictionary_of_keys)):
-            layer = dictionary_of_keys[f"layer {i}"]
-                
-            for j in range(len(layer)):
-                symbol = list(layer.keys())[j]
-                encode_symbol = str(list(layer.values())[j]) + ','
-
-                line = line.replace(symbol, encode_symbol)
-
-        encode_text.append(line)
-
-    return encode_text
-
-def decode(text: list[str], dictionary_of_keys):
-    # reverse the dictionary
+    dictionary_of_keys = {}
     inverted_dict = {}
-    for layer, chars in dictionary_of_keys.items():
-        for char, num in chars.items():
-            inverted_dict[str(num)] = char
+    used_values = set()
 
-    decode_text = []
+    layer = 0
+    index = 0
 
+    total_symbols = len(symbols)
+
+    while index < total_symbols:
+        key = f"layer {layer}"
+        dictionary_of_keys[key] = {}
+
+        elements_in_layer = 2 ** layer
+        for local_index in range(elements_in_layer):
+            if index >= total_symbols:
+                break
+
+            symbol = symbols[index]
+            if layer == 0:
+                base = 1
+            else:
+                # Accede de forma segura al valor base en la capa anterior
+                previous_layer_values = list(dictionary_of_keys[f"layer {layer - 1}"].values())
+                base_index = local_index // 2
+                if base_index >= len(previous_layer_values):
+                    base_index = len(previous_layer_values) - 1
+                base = previous_layer_values[base_index]
+
+            if not primes:
+                raise ValueError("No hay suficientes números primos para generar los códigos.")
+
+            prime = primes.pop()
+            code = base * prime
+
+            while code in used_values:
+                if not primes:
+                    raise ValueError("No hay suficientes números primos únicos disponibles.")
+                prime = primes.pop()
+                code = base * prime
+
+            dictionary_of_keys[key][symbol] = code
+            inverted_dict[str(code)] = symbol
+            used_values.add(code)
+            index += 1
+
+        layer += 1
+
+    return dictionary_of_keys, inverted_dict
+
+
+def encode(text: List[str], dictionary_of_keys: dict) -> List[str]:
+    """
+    Codifica una lista de texto usando el diccionario de claves generado.
+
+    Args:
+        text (List[str]): Texto original.
+        dictionary_of_keys (dict): Diccionario de codificación.
+
+    Returns:
+        List[str]: Texto codificado.
+    """
+    symbol_to_code = {}
+    for layer in dictionary_of_keys.values():
+        symbol_to_code.update(layer)
+
+    encoded_lines = []
     for line in text:
-        decode_line = []
+        encoded_line = ','.join(str(symbol_to_code[char]) for char in line if char in symbol_to_code)
+        encoded_lines.append(encoded_line)
 
-        for word in line.split(', '):
-            decode_word = []
+    return encoded_lines
 
-            for number in word.split(','):
-                decode_letter = inverted_dict.get(str(number.strip()), '')
-                decode_word.append(decode_letter)
-            
-            decode_word_join = ''.join(decode_word)
-            decode_line.append(decode_word_join)
 
-        decode_line_join = ' '.join(decode_line)
-        decode_text.append(decode_line_join)
+def decode(encoded_text: List[str], inverted_dict: dict) -> List[str]:
+    """
+    Decodifica una lista de líneas previamente codificadas.
 
-    return decode_text
+    Args:
+        encoded_text (List[str]): Texto codificado.
+        inverted_dict (dict): Diccionario invertido.
+
+    Returns:
+        List[str]: Texto original decodificado.
+    """
+    decoded_lines = []
+
+    for line in encoded_text:
+        numbers = line.split(',')
+        decoded_line = ''.join(inverted_dict.get(num.strip(), '') for num in numbers if num.strip())
+        decoded_lines.append(decoded_line)
+
+    return decoded_lines
+
+
+def save_to_file(filepath: str, content: List[str]) -> None:
+    """
+    Guarda una lista de líneas en un archivo de texto.
+
+    Args:
+        filepath (str): Ruta del archivo.
+        content (List[str]): Texto a guardar.
+    """
+    with open(filepath, 'w', encoding='utf-8') as f:
+        for line in content:
+            f.write(line + '\n')
+
+
+def load_from_file(filepath: str) -> List[str]:
+    """
+    Carga una lista de líneas desde un archivo de texto.
+
+    Args:
+        filepath (str): Ruta del archivo.
+
+    Returns:
+        List[str]: Texto cargado.
+    """
+    with open(filepath, 'r', encoding='utf-8') as f:
+        return [line.strip() for line in f.readlines()]
+
+
+def save_dictionaries(dict1: dict, dict2: dict, base_path: str) -> None:
+    """Guarda los diccionarios de codificación y decodificación en archivos JSON."""
+    with open(base_path + "_encoder.json", 'w') as f:
+        json.dump(dict1, f)
+
+    with open(base_path + "_decoder.json", 'w') as f:
+        json.dump(dict2, f)
 
 def test():
+    """
+    Ejecuta casos de prueba para validar el sistema de codificación y decodificación.
+    """
     cases = [
-        {'text' : ['hello my name is kopo', 'hello kopo', 'can you give a onion kopo', 'of course i will do that'], 'symbols' : None}, # test if the program can work with lowercase letters
-        {'text' : ['IOPOI PODI', 'DI'], 'symbols' : None}, # test if the program can work with capital letters
-        {'text' : ['12 34 19', '98 09 12 13'], 'symbols' : None}, # test if the program can work with numbers
-        {'text' : ['////?????? ####,,,,....======'], 'symbols' : None}, # test if the program can work with symbols
-        {'text' : ['Ho mo lo 123-123-234-55', 'Po om pol #pom', '1 + 2 = 3'], 'symbols' : None} # test if the program can work with all mix
+        ['hello my name is kopo', 'hello kopo', 'can you give a onion kopo', 'of course i will do that'],
+        ['IOPOI PODI', 'DI'],
+        ['12 34 19', '98 09 12 13'],
+        ['////?????? ####,,,,....======'],
+        ['Ho mo lo 123-123-234-55', 'Po om pol #pom', '1 + 2 = 3']
     ]
-    result = []
 
-    for text in cases:
-        text['symbols'] = create_symbols(text=text['text'])
+    for i, text in enumerate(cases):
+        dict_keys, inv_keys = create_dictionary_of_keys(text)
+        encoded = encode(text, dict_keys)
+        decoded = decode(encoded, inv_keys)
 
-        dictionary_of_keys = create_dictionary_of_keys(text['symbols'])
+        # Guardar para inspección
+        save_to_file(f'test_case_{i+1}_encoded.txt', encoded)
+        save_to_file(f'test_case_{i+1}_decoded.txt', decoded)
+        save_dictionaries(dict_keys, inv_keys, f'test_case_{i+1}_dict')
 
-        encode_text = encode(
-            text=text['text'],
-            dictionary_of_keys=dictionary_of_keys
-        )
+        assert text == decoded, f'Error en el caso {i + 1}:\nEsperado: {text}\nRecibido: {decoded}'
+        print(f'Caso {i + 1} exitoso')
 
-        decode_text = decode(
-            text=encode_text,
-            dictionary_of_keys=dictionary_of_keys
-        )
+    print("Todos los tests pasaron correctamente.")
 
-        if text['text'] == decode_text:
-            result.append(True)
-        else:
-            a = text['text']
-
-            print(f'''
-Expected text: {a}
-
-Text received: {decode_text}
-            ''')
-
-            result.append(False)
-
-    return result
 
 if __name__ == '__main__':
-    print(test())
+    test()
