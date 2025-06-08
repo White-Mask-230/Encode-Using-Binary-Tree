@@ -183,18 +183,17 @@ def encode(text: List[str], dict_path: str) -> str:
 
     return encoded_file_path
 
-def decode(encoded_path: str, inverted_dict_path: str) -> List[str]:
+def decode(encoded_path: str, inverted_dict_path: str) -> None:
     """
-        Decodes an encoded text file using an inverted dictionary stored in a file,
-        reading both files line by line to minimize memory usage.
+        Decode the encoded file line by line using an inverted dictionary file,
+        and write each decoded line immediately to an output text file to minimize memory usage.
 
         Args:
             encoded_path (str): Path to the encoded text file.
             inverted_dict_path (str): Path to the inverted dictionary JSON file.
-
-        Returns:
-            List[str]: The decoded text as a list of strings.
+            output_path (str): Path to the output file to save decoded text.
     """
+    output_path = "decode.txt"
 
     code_to_symbol = {}
 
@@ -203,28 +202,23 @@ def decode(encoded_path: str, inverted_dict_path: str) -> List[str]:
             d = json.loads(line)
             code_to_symbol.update(d)
 
-    decoded_lines = []
-
-    with open(encoded_path, 'r', encoding='utf-8') as encoded_file:
+    with open(encoded_path, 'r', encoding='utf-8') as encoded_file, \
+         open(output_path, 'w', encoding='utf-8') as output_file:
+        
         for line in encoded_file:
             line = line.strip()
 
             if not line:
-                decoded_lines.append('')
+                output_file.write('\n')
                 continue
 
-            codes = line.split(',')
-            decoded_line = []
+            decoded_line = ''.join(code_to_symbol.get(code, '') for code in line.split(','))
 
-            for code in codes:
-                symbol = code_to_symbol.get(code, '')
-                decoded_line.append(symbol)
+            output_file.write(decoded_line + '\n')
 
-            decoded_lines.append(''.join(decoded_line))
+    print(f"[INFO] Decoded text written to: {output_path}")
 
-    print(f"[INFO] Decoded text loaded from: {encoded_path}")
-
-    return decoded_lines
+    return output_path
 
 def _test():
     """
@@ -245,7 +239,11 @@ def _test():
 
         dict_path, inverted_path = create_dictionary_of_keys(case)
         encoded_file = encode(case, dict_path)
-        decoded = decode(encoded_file, inverted_path)
+
+        decoded_output_path = decode(encoded_file, inverted_path)
+
+        with open(decoded_output_path, 'r', encoding='utf-8') as f:
+            decoded = [line.rstrip('\n') for line in f]
 
         if decoded == case:
             print("[RESULT] OK")
