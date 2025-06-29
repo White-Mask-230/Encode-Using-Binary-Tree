@@ -1,19 +1,51 @@
 """
-    Module implementing a prime-factorization-based encoding and decoding system.
+# General script information
+* Description: Encryption using prime numbers and binary tree structure.
+* Creator: Lucas Varela Correa
+* Version: 1.0.0
+* Creation date: 06/29/2025
 
-    This module generates a hierarchical encoding dictionary mapping unique symbols from 
-    input text to distinct composite integers formed by products of prime numbers arranged 
-    in layers. Each layer corresponds to an exponential expansion of symbols encoded with 
-    unique prime factors ensuring collision-free reversible mappings.
+# Included functions
+* create_dictionary_of_keys
+* encode
+* decode
+For more information about their arguments or how they work, please visit the function of your interest.
 
-    Functionality includes:
-        * Dynamically generating a sufficient set of prime numbers tailored to input size.
-        * Incremental serialization of dictionaries and encoded text to disk for memory efficiency.
-        * Public API exposing creation of encoding/decoding dictionaries, text encoding, and decoding.
-        * Support for full ASCII range including alphabetic characters, digits, and special symbols.
+* Requirements:
+    - Python version > 3.5
 
-    This design facilitates reversible and scalable symbol encoding suitable for custom 
-    lightweight cryptographic or compression applications.
+# Script usage
+This script has been designed to be used as a library. An example script is shown below so you can start using this library right away:
+import EUBTA
+
+cases = [
+    ['hello my name is kopo', 'hello kopo'],
+    ['IOPOI PODI', 'DI'],
+    ['12 34 19', '98 09 12 13'],
+    ['////?????? ####,,,,....======'],
+    ['Ho mo lo 123-123-234-55', 'Po om pol #pom', '1 + 2 = 3']
+]
+
+for i, case in enumerate(cases):
+    dict_path, inverted_path = create_dictionary_of_keys(case)
+    encoded_file = encode(case, dict_path)
+    decoded_file = decode(encoded_file, inverted_path)
+
+    print(f'Your dict path: {dict_path}')
+    print(f'Your inverted path: {inverted_path}')
+    print(f'Your encoded file path: {encoded_file}')
+    print(f'Your decoded file path: {decoded_file}')
+
+# License
+This project uses the MIT License. For more information, please visit: https://github.com/White-Mask-230/Encode-Using-Binary-Tree/blob/main/LICENSE
+
+# Legal Notice
+This script is provided "as is", without any warranties of any kind. It was created and shared for educational and research purposes only. Misuse of this script may be illegal in some jurisdictions.
+Make sure to comply with all applicable laws and regulations when using this script. The creator is not responsible for any damage or issues that may arise from its use.
+
+# Social Media
+* GitHub: https://github.com/White-Mask-230
+* Twitter (X): https://x.com/LucasVarelaCor1
 """
 
 import random, json
@@ -54,7 +86,7 @@ def _generate_prime_numbers(n: int) -> List[int]:
 
     return primes
 
-def create_dictionary_of_keys(text: List[str]) -> Tuple[str, str]:
+def create_dictionary_of_keys(text: List[str], dict_file_path="dictionary.json", inverted_file_path="inverted_dictionary.json") -> Tuple[str, str]:
     """
         Creates encoding and decoding dictionaries from the given text and saves them to files.
 
